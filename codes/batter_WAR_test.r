@@ -22,10 +22,31 @@ combined_data_batter <- combined_data_batter %>% select(-ncol(combined_data_batt
 
 #4번째 열 이름 오류 수정
 names(combined_data_batter)[4] <- "WAR"
+names(combined_data_batter)[25] <- "AVG"
+names(combined_data_batter)[26] <- "OBP"
+names(combined_data_batter)[27] <- "SLG"
+names(combined_data_batter)[28] <- "OPS"
+names(combined_data_batter)[29] <- "R/ePA"
+names(combined_data_batter)[30] <- "wRC"
+
 
 for (i in 1:nrow(combined_data_batter)) {
-  combined_data_batter <- mutate(combined_data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP))
-  combined_data_batter <- mutate(combined_data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP))
+  combined_data_batter <- mutate(combined_data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP)) #case A = 한베이스당 한 가중치
+  combined_data_batter <- mutate(combined_data_batter, caseB = as.numeric(OPS)+as.numeric(wRC)) # case B = ops + wRC+
+  combined_data_batter <- mutate(combined_data_batter, caseC = as.numeric(SF)+as.numeric(RBI)) # case C = RBI + SF , 클러치 상황 (희생플라이 + 타점)
+  combined_data_batter <- mutate(combined_data_batter, caseD = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 유효타석 / 출장경기수
 }
 
 print(head(arrange(combined_data_batter,desc(caseA)),n=50))
+
+#데이터를 long term으로 변환, case와 value로 이루어진 새로운 data frame 형성
+combined_data_long <- combined_data_batter %>% select(caseA, caseB, caseC, caseD) %>% tidyr::gather(key = "case", value = "batter")
+
+
+print(ggplot(combined_data_long, aes(x = batter, fill = case)) +
+  geom_histogram(position = "dodge", bins = 30) +
+  facet_wrap(~case, scales = "free_x", ncol = 2) +
+  ggtitle("Graph differences in new win contribution for different custom weights") +
+  xlab("Batter") + ylab("New custom weight") +
+  theme_minimal() +
+  scale_fill_manual(values = c("blue", "red", "green", "purple")))
