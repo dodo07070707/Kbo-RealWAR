@@ -40,6 +40,9 @@ for (i in 1:nrow(combined_data_batter)) {
 combined_data_batter <- combined_data_batter %>% unite(NameYear, Name, Team, sep=" ")
 combined_data_batter <- arrange(combined_data_batter,desc(caseA))
 combined_data_batter$index <- 1:nrow(combined_data_batter)
+combined_data_batter$caseB <- combined_data_batter$caseB / 2
+combined_data_batter$caseD <- combined_data_batter$caseD * 90
+
 
 #print(head(arrange(combined_data_batter,desc(caseA)),n=50))
 
