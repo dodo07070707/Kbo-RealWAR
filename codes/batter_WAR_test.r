@@ -20,7 +20,7 @@ combined_data_batter <- combined_data_batter %>% filter(Rank != "Rank")
 #중복값 제거
 combined_data_batter <- combined_data_batter %>% select(-ncol(combined_data_batter))
 
-#4번째 열 이름 오류 수정
+#이름 오류 수정
 names(combined_data_batter)[4] <- "WAR"
 names(combined_data_batter)[25] <- "AVG"
 names(combined_data_batter)[26] <- "OBP"
@@ -37,16 +37,16 @@ for (i in 1:nrow(combined_data_batter)) {
   combined_data_batter <- mutate(combined_data_batter, caseD = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 유효타석 / 출장경기수
 }
 
-print(head(arrange(combined_data_batter,desc(caseA)),n=50))
+#print(head(arrange(combined_data_batter,desc(caseA)),n=50))
 
 #데이터를 long term으로 변환, case와 value로 이루어진 새로운 data frame 형성
 combined_data_long <- combined_data_batter %>% select(caseA, caseB, caseC, caseD) %>% tidyr::gather(key = "case", value = "batter")
 
+print(summary(combined_data_long))
 
-print(ggplot(combined_data_long, aes(x = batter, fill = case)) +
-  geom_histogram(position = "dodge", bins = 30) +
-  facet_wrap(~case, scales = "free_x", ncol = 2) +
-  ggtitle("Graph differences in new win contribution for different custom weights") +
-  xlab("Batter") + ylab("New custom weight") +
-  theme_minimal() +
-  scale_fill_manual(values = c("blue", "red", "green", "purple")))
+# print(ggplot(data = combined_data_long, aes(x = row_number(), y = batter, color = case)) +
+#   geom_line() +
+#   ggtitle("Graph differences in new win contribution for different custom weights") +
+#   xlab("Player") + ylab("New custom weight") +
+#   theme_minimal() +
+#   scale_color_manual(values = c("blue", "red", "green", "purple")))
