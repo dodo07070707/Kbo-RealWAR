@@ -37,16 +37,17 @@ for (i in 1:nrow(combined_data_batter)) {
   combined_data_batter <- mutate(combined_data_batter, caseD = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 유효타석 / 출장경기수
 }
 
+combined_data_batter <- combined_data_batter %>% unite(NameYear, Name, Team, sep=" ")
+combined_data_batter <- arrange(combined_data_batter,desc(caseA))
+combined_data_batter$index <- 1:nrow(combined_data_batter)
+
 #print(head(arrange(combined_data_batter,desc(caseA)),n=50))
 
-#데이터를 long term으로 변환, case와 value로 이루어진 새로운 data frame 형성
-combined_data_long <- combined_data_batter %>% select(caseA, caseB, caseC, caseD) %>% tidyr::gather(key = "case", value = "batter")
+#y축 범위 제한 자동화 + 결측치 제거를 위한 코드
+ylim_min <- min(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC),na.omit(combined_data_batter$caseD)))
+ylim_max <- max(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC), na.omit(combined_data_batter$caseD)))
 
-print(summary(combined_data_long))
-
-# print(ggplot(data = combined_data_long, aes(x = row_number(), y = batter, color = case)) +
-#   geom_line() +
-#   ggtitle("Graph differences in new win contribution for different custom weights") +
-#   xlab("Player") + ylab("New custom weight") +
-#   theme_minimal() +
-#   scale_color_manual(values = c("blue", "red", "green", "purple")))
+plot(combined_data_batter$index,combined_data_batter$caseA, type="l", col="red", xlim=c(0,4715), ylim=c(ylim_min,ylim_max), xlab="Batter", ylab="New custom weight", main="Graph differences in new win contribution for different custom weights")
+lines(combined_data_batter$index, combined_data_batter$caseB, col="blue", type="l")
+lines(combined_data_batter$index, combined_data_batter$caseC, col="green", type="l")
+lines(combined_data_batter$index, combined_data_batter$caseD, col="purple", type="l")
