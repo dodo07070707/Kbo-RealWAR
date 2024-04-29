@@ -38,7 +38,7 @@ for (i in 1:nrow(combined_data_batter)) {
 }
 
 combined_data_batter <- combined_data_batter %>% unite(NameYear, Name, Team, sep=" ")
-combined_data_batter <- arrange(combined_data_batter,desc(caseA))
+combined_data_batter <- arrange(combined_data_batter,desc(WAR))
 combined_data_batter$index <- 1:nrow(combined_data_batter)
 combined_data_batter$caseB <- combined_data_batter$caseB / 2
 combined_data_batter$caseD <- combined_data_batter$caseD * 90
@@ -50,7 +50,7 @@ combined_data_batter$caseD <- combined_data_batter$caseD * 90
 ylim_min <- min(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC),na.omit(combined_data_batter$caseD)))
 ylim_max <- max(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC), na.omit(combined_data_batter$caseD)))
 
-plot(combined_data_batter$index,combined_data_batter$caseA, type="l", col="red", xlim=c(0,4715), ylim=c(ylim_min,ylim_max), xlab="Batter", ylab="New custom weight", main="Graph differences in new win contribution for different custom weights")
+plot(combined_data_batter$index,combined_data_batter$caseA, type="l", col="red", xlim=c(0,100), ylim=c(ylim_min,ylim_max), xlab="Batter", ylab="New custom weight", main="Graph differences in new win contribution for different custom weights")
 lines(combined_data_batter$index, combined_data_batter$caseB, col="blue", type="l")
 lines(combined_data_batter$index, combined_data_batter$caseC, col="green", type="l")
 lines(combined_data_batter$index, combined_data_batter$caseD, col="purple", type="l")
