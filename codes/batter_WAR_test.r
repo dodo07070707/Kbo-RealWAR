@@ -44,7 +44,7 @@ combined_data_batter$caseB <- combined_data_batter$caseB / 2
 combined_data_batter$caseD <- combined_data_batter$caseD * 90
 
 
-#print(head(arrange(combined_data_batter,desc(caseA)),n=50))
+print(head(arrange(combined_data_batter,desc(caseA)),n=50))
 
 #y축 범위 제한 자동화 + 결측치 제거를 위한 코드
 ylim_min <- min(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC),na.omit(combined_data_batter$caseD)))
@@ -54,3 +54,4 @@ plot(combined_data_batter$index,combined_data_batter$caseA, type="l", col="red",
 lines(combined_data_batter$index, combined_data_batter$caseB, col="blue", type="l")
 lines(combined_data_batter$index, combined_data_batter$caseC, col="green", type="l")
 lines(combined_data_batter$index, combined_data_batter$caseD, col="purple", type="l")
+
