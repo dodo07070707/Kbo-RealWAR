@@ -2,24 +2,29 @@ combined_data_batter <- data.frame()
 
 # 파일 이름 생성
 file_name_batter <- paste0("Kbo_Stats/batter/batter_2005.xlsx")
+file_name_pitcher <- paste0("Kbo_Stats/batter/pitcher_2005.xlsx")
 file_name_team_info <- paste0("Kbo_Stats/TeamInfo.xlsx")
 file_name_team_rank <- paste0("Kbo_Stats/Team/Team_2005.xlsx")
   
 # 파일 경로 생성
 file_path_batter <- file.path(getwd(), file_name_batter)
+file_path_pitcher <- file.path(getwd(), file_name_pitcher)
 file_path_team_info <- file.path(getwd(), file_name_team_info)
 file_path_team_rank <- file.path(getwd(), file_name_team_rank)
   
 # 엑셀 파일 읽기
 data_batter <- read_excel(file_path_batter)
+data_pitcher <- read_excel(file_path_pitcher)
 data_team_info <- read_excel(file_name_team_info)
 data_team_rank <- read_excel(file_name_team_rank)
   
 #결측치 제거
 data_batter <- data_batter %>% filter(Rank != "Rank")
+data_pitcher <- data_pitcher %>% filter(Rank != "Rank")
 
 #중복값 제거
 data_batter <- data_batter %>% select(-ncol(data_batter))
+data_pitcher <- data_pitcher %>% select(-ncol(data_pitcher))
 
 #이름 오류 수정
 names(data_batter)[4] <- "WAR"
@@ -31,18 +36,22 @@ names(data_batter)[29] <- "R/ePA"
 names(data_batter)[30] <- "wRC"
 names(data_team_rank)[1] <- "Team"
 names(data_team_rank)[8] <- "WinRate"
+names(data_pitcher)[4] <- "WAR"
 
 #연도 정보 추가
 data_batter$Year <- 2005
+data_pitcher$Year <- 2005
 
-#팀 정보를 가져와 저장하기 
+#팀 정보 다른 파일에서 추출 후 저장 
 selected_rows <- subset(data_team_info, Year==2005 & Type == "batter")
-
 team_info <- selected_rows$Team
-
 data_batter$Team <- team_info
 
-#정해놓은 가중치 추가
+selected_rows <- subset(data_team_info, Year==2005 & Type == "pitcher")
+team_info <- selected_rows$Team
+data_pitcher$Team <- team_info
+
+#정해놓은 가중치 생성
 for (i in 1:nrow(data_batter)) {
   data_batter <- mutate(data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP)) #case A = 한베이스당 한 가중치
   data_batter <- mutate(data_batter, caseB = as.numeric(OPS)+as.numeric(wRC)) # case B = ops + wRC+
