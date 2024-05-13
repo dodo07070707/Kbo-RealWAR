@@ -3,7 +3,9 @@
 **Subject**
 최근 20년 KBO 통계를 이용해 야구 WAR(승리기여도)의 알맞은 수치별 가중치를 구해보자   
 **Developer**
-김도윤   
+김도윤
+**Special Thanks**
+김민재, 조성민
 **Used Stack**
  - Excel Web Scrapper (데이터 수집)
  - R (빅데이터 분석 언어)
