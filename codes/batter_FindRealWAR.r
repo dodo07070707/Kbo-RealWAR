@@ -130,11 +130,13 @@ for (i in 1:nrow(team_caseD)) {
 write_xlsx(data_team_rank, path="Kbo_Stats/testing.xlsx")
 
 
-# #y축 범위 제한 자동화 + 결측치 제거를 위한 코드
-# ylim_min <- min(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC),na.omit(combined_data_batter$caseD)))
-# ylim_max <- max(c(na.omit(combined_data_batter$caseA), na.omit(combined_data_batter$caseB), na.omit(combined_data_batter$caseC), na.omit(combined_data_batter$caseD)))
+#y축 범위 제한 자동화 + 그래프 시각화
+ylim_min <- min(c(data_team_rank$caseA_total, data_team_rank$caseB_total, data_team_rank$caseC_total, data_team_rank$caseD_total))
+ylim_max <- max(c(data_team_rank$caseA_total, data_team_rank$caseB_total, data_team_rank$caseC_total, data_team_rank$caseD_total))
 
-# plot(combined_data_batter$index,combined_data_batter$caseA, type="l", col="red", xlim=c(0,100), ylim=c(ylim_min,ylim_max), xlab="Batter", ylab="New custom weight", main="Graph differences in new win contribution for different custom weights")
-# lines(combined_data_batter$index, combined_data_batter$caseB, col="blue", type="l")
-# lines(combined_data_batter$index, combined_data_batter$caseC, col="green", type="l")
-# lines(combined_data_batter$index, combined_data_batter$caseD, col="purple", type="l")
+plot(data_team_rank$WinRate,data_team_rank$caseA_total, type="l", col="red", xlim=c(0.3,0.7), ylim=c(ylim_min,ylim_max), xlab="Win Rate", ylab="New custom weight", main="Correlation between winning percentage in 2005 and new weight values")
+lines(data_team_rank$WinRate, data_team_rank$caseB_total, col="blue", type="l")
+lines(data_team_rank$WinRate, data_team_rank$caseC_total*3, col="green", type="l")
+lines(data_team_rank$WinRate, data_team_rank$caseD_total*30, col="purple", type="l")
+lines(data_team_rank$WinRate, data_team_rank$WAR_total*60, col="black", type="l")
+legend("bottomright",legend=c("caseA","caseB","caseC*3","caseD*30","WAR*60"),fill=c("red","blue","green","purple","black"),border="white",box.lty=0,cex=1.5)
