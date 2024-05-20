@@ -51,7 +51,7 @@ selected_rows <- subset(data_team_info, Year==2005 & Type == "pitcher")
 team_info <- selected_rows$Team
 data_pitcher$Team <- team_info
 
-#정해놓은 가중치 생성
+#정해놓은 가중치 생성 _ 타자
 for (i in 1:nrow(data_batter)) {
   data_batter <- mutate(data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP)) #case A = 한베이스당 한 가중치
   data_batter <- mutate(data_batter, caseB = as.numeric(OPS)+as.numeric(wRC)) # case B = ops + wRC+
@@ -59,7 +59,15 @@ for (i in 1:nrow(data_batter)) {
   data_batter <- mutate(data_batter, caseD = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 유효타석 / 출장경기수
 }
 
-#팀별로 caseA값 합산
+#정해놓은 가중치 생성 _ 투수
+for (i in 1:nrow(data_pitcher)) {
+  data_pitcher <- mutate(data_pitcher, caseW = as.numeric(SO)) #case W = 한베이스당 한 가중치 + 삼진
+  data_pitcher <- mutate(data_pitcher, caseX = as.numeric(OPS)+as.numeric(wRC)) # case B = rRA9pf + WHIP
+  data_pitcher <- mutate(data_pitcher, caseY = as.numeric(SF)+as.numeric(RBI)) # case Y = RBI + SF , 평균자책 역가중치
+  data_pitcher <- mutate(data_pitcher, caseZ = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 소화이닝
+}
+
+#팀별로 가중치값 합산
 team_WAR <- data_batter %>% group_by(Team) %>% summarise(WAR_total = sum(as.numeric(WAR), na.rm=TRUE))
 team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = sum(caseA, na.rm=TRUE))
 team_caseB <- data_batter %>% group_by(Team) %>% summarise(caseB_total = sum(caseB, na.rm=TRUE))
