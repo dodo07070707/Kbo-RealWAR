@@ -2,7 +2,7 @@ combined_data_batter <- data.frame()
 
 # 파일 이름 생성
 file_name_batter <- paste0("Kbo_Stats/batter/batter_2005.xlsx")
-file_name_pitcher <- paste0("Kbo_Stats/batter/pitcher_2005.xlsx")
+file_name_pitcher <- paste0("Kbo_Stats/pitcher/pitcher_2005.xlsx")
 file_name_team_info <- paste0("Kbo_Stats/TeamInfo.xlsx")
 file_name_team_rank <- paste0("Kbo_Stats/Team/Team_2005.xlsx")
   
@@ -61,18 +61,23 @@ for (i in 1:nrow(data_batter)) {
 
 #정해놓은 가중치 생성 _ 투수
 for (i in 1:nrow(data_pitcher)) {
-  data_pitcher <- mutate(data_pitcher, caseW = as.numeric(SO)) #case W = 한베이스당 한 가중치 + 삼진
-  data_pitcher <- mutate(data_pitcher, caseX = as.numeric(OPS)+as.numeric(wRC)) # case B = rRA9pf + WHIP
-  data_pitcher <- mutate(data_pitcher, caseY = as.numeric(SF)+as.numeric(RBI)) # case Y = RBI + SF , 평균자책 역가중치
-  data_pitcher <- mutate(data_pitcher, caseZ = as.numeric(ePA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 소화이닝
+  data_pitcher <- mutate(data_pitcher, caseX = if_else(as.numeric(WHIP) >= 10 | as.numeric(rRA9pf)>=50, 0, 100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10))) # case X = rRA9pf + WHIP
+  data_pitcher <- mutate(data_pitcher, caseY = if_else(as.numeric(ERA)>=50,0,-1*as.numeric(ERA))) # case Y = -ERA
+  data_pitcher <- mutate(data_pitcher, caseZ = as.numeric(G)+as.numeric(IP)*2) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
 }
+data_pitcher$caseY = data_pitcher$caseY + 50
 
 #팀별로 가중치값 합산
-team_WAR <- data_batter %>% group_by(Team) %>% summarise(WAR_total = sum(as.numeric(WAR), na.rm=TRUE))
+team_WAR_batter <- data_batter %>% group_by(Team) %>% summarise(WAR_total_batter = sum(as.numeric(WAR), na.rm=TRUE))
+team_WAR_pitcher <- data_pitcher %>% group_by(Team) %>% summarise(WAR_total_pitcher = sum(as.numeric(WAR), na.rm=TRUE))
+team_WAR <- team_WAR_batter %>% full_join(team_WAR_pitcher, by = "Team") %>% mutate(WAR_total = coalesce(WAR_total_batter, 0) + coalesce(WAR_total_pitcher, 0))
 team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = sum(caseA, na.rm=TRUE))
 team_caseB <- data_batter %>% group_by(Team) %>% summarise(caseB_total = sum(caseB, na.rm=TRUE))
 team_caseC <- data_batter %>% group_by(Team) %>% summarise(caseC_total = sum(caseC, na.rm=TRUE))
 team_caseD <- data_batter %>% group_by(Team) %>% summarise(caseD_total = sum(caseD, na.rm=TRUE))
+team_caseX <- data_pitcher %>% group_by(Team) %>% summarise(caseX_total = sum(caseX, na.rm=TRUE))
+team_caseY <- data_pitcher %>% group_by(Team) %>% summarise(caseY_total = sum(caseY, na.rm=TRUE))
+team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = sum(caseZ, na.rm=TRUE))
 
 # data_team_rank 파일에 WAR_total 값을 추가
 for (i in 1:nrow(team_WAR)) {
@@ -144,16 +149,57 @@ for (i in 1:nrow(team_caseD)) {
   }
 }
 
+# data_team_rank 파일에 caseX_total 값을 추가
+for (i in 1:nrow(team_caseX)) {
+  temp_team_name1 <- team_caseX$Team[i]
+  selected_teamrow <- subset(team_caseX, Team==temp_team_name1)
+  selected_teamcaseX <- selected_teamrow$caseX_total
+  for(j in 1:nrow(data_team_rank)){
+    temp_team_name2 <- data_team_rank$Team[j]
+    if(temp_team_name1 == temp_team_name2){
+        data_team_rank$caseX_total[j] <- selected_teamcaseX
+        break
+    }
+  }
+}
+
+# data_team_rank 파일에 caseY_total 값을 추가
+for (i in 1:nrow(team_caseY)) {
+  temp_team_name1 <- team_caseY$Team[i]
+  selected_teamrow <- subset(team_caseY, Team==temp_team_name1)
+  selected_teamcaseY <- selected_teamrow$caseY_total
+  for(j in 1:nrow(data_team_rank)){
+    temp_team_name2 <- data_team_rank$Team[j]
+    if(temp_team_name1 == temp_team_name2){
+        data_team_rank$caseY_total[j] <- selected_teamcaseY
+        break
+    }
+  }
+}
+
+# data_team_rank 파일에 caseZ_total 값을 추가
+for (i in 1:nrow(team_caseZ)) {
+  temp_team_name1 <- team_caseZ$Team[i]
+  selected_teamrow <- subset(team_caseZ, Team==temp_team_name1)
+  selected_teamcaseZ <- selected_teamrow$caseZ_total
+  for(j in 1:nrow(data_team_rank)){
+    temp_team_name2 <- data_team_rank$Team[j]
+    if(temp_team_name1 == temp_team_name2){
+        data_team_rank$caseZ_total[j] <- selected_teamcaseZ
+        break
+    }
+  }
+}
+
 write_xlsx(data_team_rank, path="Kbo_Stats/testing.xlsx")
 
 
 #y축 범위 제한 자동화 + 그래프 시각화
-ylim_min <- min(c(data_team_rank$caseA_total, data_team_rank$caseB_total, data_team_rank$caseC_total, data_team_rank$caseD_total))
-ylim_max <- max(c(data_team_rank$caseA_total, data_team_rank$caseB_total, data_team_rank$caseC_total, data_team_rank$caseD_total))
+ylim_min <- min(c(data_team_rank$caseX_total/5, data_team_rank$caseY_total/5, data_team_rank$caseZ_total/10))
+ylim_max <- max(c(data_team_rank$caseX_total/5, data_team_rank$caseY_total/5, data_team_rank$caseZ_total/10))
 
-plot(data_team_rank$WinRate,data_team_rank$caseA_total, type="l", col="red", xlim=c(0.3,0.7), ylim=c(ylim_min,ylim_max), xlab="Win Rate", ylab="New custom weight", main="Correlation between winning percentage in 2005 and new weight values")
-lines(data_team_rank$WinRate, data_team_rank$caseB_total, col="blue", type="l")
-lines(data_team_rank$WinRate, data_team_rank$caseC_total*3, col="green", type="l")
-lines(data_team_rank$WinRate, data_team_rank$caseD_total*30, col="purple", type="l")
-lines(data_team_rank$WinRate, data_team_rank$WAR_total*60, col="black", type="l")
-legend("bottomright",legend=c("caseA","caseB","caseC*3","caseD*30","WAR*60"),fill=c("red","blue","green","purple","black"),border="white",box.lty=0,cex=1.5)
+plot(data_team_rank$WinRate,data_team_rank$caseX_total/5, type="l", col="red", xlim=c(0.3,0.7), ylim=c(ylim_min,ylim_max), xlab="Win Rate", ylab="New custom weight", main="Correlation between winning percentage in 2005 and new weight values")
+lines(data_team_rank$WinRate, data_team_rank$caseY_total/5,col="green", type="l")
+lines(data_team_rank$WinRate, data_team_rank$caseZ_total/10, col="purple", type="l")
+lines(data_team_rank$WinRate, data_team_rank$WAR_total*5, col="black", type="l")
+legend("bottomright",legend=c("caseX/5","caseY/5","caseZ/10","WAR*5"),fill=c("red","green","purple","black"),border="white",box.lty=0,cex=1.5)
