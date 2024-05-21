@@ -191,6 +191,16 @@ for (i in 1:nrow(team_caseZ)) {
   }
 }
 
+# data_team_rank에 각 가중치의 순위와 실제 순위의 차이값 입력
+data_team_rank$Rank <- rank(-data_team_rank$WinRate, ties.method = "min")
+data_team_rank$caseA_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseA_total, ties.method = "min"))
+data_team_rank$caseB_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseB_total, ties.method = "min"))
+data_team_rank$caseC_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseC_total, ties.method = "min"))
+data_team_rank$caseD_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseD_total, ties.method = "min"))
+data_team_rank$caseX_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseX_total, ties.method = "min"))
+data_team_rank$caseY_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseY_total, ties.method = "min"))
+data_team_rank$caseZ_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseZ_total, ties.method = "min"))
+
 write_xlsx(data_team_rank, path="Kbo_Stats/testing.xlsx")
 
 
