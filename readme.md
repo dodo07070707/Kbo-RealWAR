@@ -7,7 +7,7 @@
 **Special Thanks**
 김민재, 조성민  
 **Used Stack**
-R, Excel Web Scrapper  
+R, Node.js, Excel Web Scrapper  
 
 # 필요한 라이브러리 불러오기
 ```
