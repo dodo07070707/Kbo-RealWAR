@@ -1,7 +1,14 @@
+library(readxl)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(writexl)
+
 # 반복할 연도 범위 설정
 start_year <- 2005
 end_year <- 2023
 for (now_year in start_year:end_year) {
+
     # 파일 이름 생성
     file_name_batter <- paste0("Kbo_Stats/batter/batter_", now_year, ".xlsx")
     file_name_pitcher <- paste0("Kbo_Stats/pitcher/pitcher_", now_year, ".xlsx")
@@ -80,6 +87,32 @@ for (now_year in start_year:end_year) {
     team_caseX <- data_pitcher %>% group_by(Team) %>% summarise(caseX_total = sum(caseX, na.rm=TRUE))
     team_caseY <- data_pitcher %>% group_by(Team) %>% summarise(caseY_total = sum(caseY, na.rm=TRUE))
     team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = sum(caseZ, na.rm=TRUE))
+    
+    # 필요시 열 생성
+    if (!"WAR_total" %in% colnames(data_team_rank)) {
+        data_team_rank$WAR_total <- NA
+    }
+    if (!"caseA_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseA_total <- NA
+    }
+    if (!"caseB_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseB_total <- NA
+    }
+    if (!"caseC_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseC_total <- NA
+    }
+    if (!"caseD_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseD_total <- NA
+    }
+    if (!"caseX_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseX_total <- NA
+    }
+    if (!"caseY_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseY_total <- NA
+    }
+    if (!"caseZ_total" %in% colnames(data_team_rank)) {
+        data_team_rank$caseZ_total <- NA
+    }
 
     # data_team_rank 파일에 WAR_total 값을 추가
     for (i in 1:nrow(team_WAR)) {
@@ -203,6 +236,38 @@ for (now_year in start_year:end_year) {
     data_team_rank$caseY_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseY_total, ties.method = "min"))
     data_team_rank$caseZ_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseZ_total, ties.method = "min"))
 
-    write_xlsx(data_team_rank, path = paste0("Kbo_Stats/data_", now_year, ".xlsx"))
-    print(now_year)
+    write_xlsx(data_team_rank, path = paste0("Analyzed/raw/data_", now_year, ".xlsx"))
+
+    rm(file_name_batter)
+    rm(file_name_pitcher)
+    rm(file_name_team_info)
+    rm(file_name_team_rank)
+    rm(file_path_batter)
+    rm(file_path_pitcher)
+    rm(file_path_team_info)
+    rm(file_path_team_rank)
+    rm(data_batter)
+    rm(data_pitcher)
+    rm(data_team_info)
+    rm(data_team_rank)
+    rm(team_info)
+    rm(selected_rows)
+    rm(team_WAR_batter)
+    rm(team_WAR_pitcher)
+    rm(team_WAR)
+    rm(team_caseA)
+    rm(team_caseB)
+    rm(team_caseC)
+    rm(team_caseD)
+    rm(team_caseX)
+    rm(team_caseY)
+    rm(team_caseZ)
+    
+    print(paste("Year : ",now_year," file created, completed"))
+
 }
+print("Analyze Complete")
+print("total analyzed Year : 2005~2023")
+print("total analyzed Batter : 4715")
+print("total analyzed Pitcher : 4274")
+print("total analyzed baseball player in KBO : 8989")
