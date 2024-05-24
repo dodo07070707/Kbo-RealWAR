@@ -25,4 +25,4 @@ library(writexl) # tidyr 라이브러리 불러오기
   
 *이거하려고R배움*
 
-![KakaoTalk_20240524_224001980](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/726143fb-1a31-47a3-b5f1-48033f84a8a8)
+![Frame 3797](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/98a3a865-674c-485d-a0e1-a1aeb64fc3ba)
