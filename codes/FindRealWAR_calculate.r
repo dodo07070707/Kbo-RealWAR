@@ -80,13 +80,13 @@ for (now_year in start_year:end_year) {
     team_WAR_batter <- data_batter %>% group_by(Team) %>% summarise(WAR_total_batter = sum(as.numeric(WAR), na.rm=TRUE))
     team_WAR_pitcher <- data_pitcher %>% group_by(Team) %>% summarise(WAR_total_pitcher = sum(as.numeric(WAR), na.rm=TRUE))
     team_WAR <- team_WAR_batter %>% full_join(team_WAR_pitcher, by = "Team") %>% mutate(WAR_total = coalesce(WAR_total_batter, 0) + coalesce(WAR_total_pitcher, 0))
-    team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = sum(caseA, na.rm=TRUE))
+    team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = 0.1 * sum(caseA, na.rm=TRUE))
     team_caseB <- data_batter %>% group_by(Team) %>% summarise(caseB_total = sum(caseB, na.rm=TRUE)) #사장
-    team_caseC <- data_batter %>% group_by(Team) %>% summarise(caseC_total = sum(caseC, na.rm=TRUE))
+    team_caseC <- data_batter %>% group_by(Team) %>% summarise(caseC_total = 0.1 * sum(caseC, na.rm=TRUE))
     team_caseD <- data_batter %>% group_by(Team) %>% summarise(caseD_total = sum(caseD, na.rm=TRUE)) #사장
-    team_caseX <- data_pitcher %>% group_by(Team) %>% summarise(caseX_total = sum(caseX, na.rm=TRUE))
+    team_caseX <- data_pitcher %>% group_by(Team) %>% summarise(caseX_total = 0.1 * sum(caseX, na.rm=TRUE))
     team_caseY <- data_pitcher %>% group_by(Team) %>% summarise(caseY_total = sum(caseY, na.rm=TRUE)) #사장
-    team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = sum(caseZ, na.rm=TRUE))
+    team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = 0.1 * sum(caseZ, na.rm=TRUE))
     
     # 필요시 열 생성
     if (!"WAR_total" %in% colnames(data_team_rank)) {
@@ -235,8 +235,13 @@ for (now_year in start_year:end_year) {
     data_team_rank$caseX_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseX_total, ties.method = "min"))
     data_team_rank$caseY_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseY_total, ties.method = "min"))
     data_team_rank$caseZ_rankdif <- abs(data_team_rank$Rank-rank(-data_team_rank$caseZ_total, ties.method = "min"))
+    data_team_rank$ACXZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseA_total + data_team_rank$caseC_total + data_team_rank$caseX_total + data_team_rank$caseZ_total), ties.method = "min"))
+    data_team_rank$AXcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseA_total + data_team_rank$caseX_total), ties.method = "min"))
+    data_team_rank$AZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseA_total + data_team_rank$caseZ_total), ties.method = "min"))
+    data_team_rank$CXcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseX_total), ties.method = "min"))
+    data_team_rank$CZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseZ_total), ties.method = "min"))
 
-    write_xlsx(data_team_rank, path = paste0("Analyzed/raw/data_", now_year, ".xlsx"))
+    write_xlsx(data_team_rank, path = paste0("Analyzed/try2/data_", now_year, ".xlsx"))
 
     rm(file_name_batter)
     rm(file_name_pitcher)
@@ -266,3 +271,41 @@ for (now_year in start_year:end_year) {
     print(paste("Year : ",now_year," file created, completed"))
 
 }
+
+
+results <- list()
+
+for (now_year in start_year:end_year) {
+    file_path <- paste0("Analyzed/try2/data_", now_year, ".xlsx")
+    data <- read_excel(file_path)
+    
+    # 동적 저장
+    assign(paste0("data_", now_year), data)
+    
+    # 가중치 합 계산
+    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb")
+    case_sums <- colSums(data[, selected_columns])
+    results[[paste0("data_", now_year, "_sums")]] <- case_sums
+}
+
+# 결과 데이터 프레임 통합
+results_df <- do.call(rbind, lapply(names(results), function(name) {
+    year <- as.numeric(sub("data_(\\d+)_sums", "\\1", name))
+    data.frame(Year = year, t(results[[name]]))
+}))
+
+# 데이터 프레임을 long format으로 변환
+results_long <- gather(results_df, key = "Case", value = "Sum", -Year)
+
+# 'AXcomb'와 'AZcomb' 데이터만 필터링
+results_filtered <- results_long %>% filter(Case %in% c("CXcomb", "CZcomb"))
+
+# 그래프 그리기
+cases <- unique(results_filtered$Case)
+colors <- rainbow(length(cases))
+plot(results_filtered$Year, results_filtered$Sum, type = "n", xlab = "Year", ylab = "Sum of weight Differences", main = "Comparison trends for AXcomb and AZcomb")
+for (i in seq_along(cases)) {
+    case_data <- subset(results_filtered, Case == cases[i])
+    lines(case_data$Year, case_data$Sum, type = "b", col = colors[i], pch = 19, lwd = 2)
+}
+legend("topleft", legend = cases, col = colors, pch = 19, lwd = 2)
