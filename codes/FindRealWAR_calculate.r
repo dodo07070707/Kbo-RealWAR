@@ -62,9 +62,9 @@ for (now_year in start_year:end_year) {
 
     #정해놓은 가중치 생성 _ 타자
     for (i in 1:nrow(data_batter)) {
-    data_batter <- mutate(data_batter, caseA = as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP)) #case A = 한베이스당 한 가중치
+    data_batter <- mutate(data_batter, caseA = (as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP))^2) #case A = 한베이스당 한 가중치
     data_batter <- mutate(data_batter, caseB = as.numeric(OPS)+as.numeric(wRC)) # case B = ops + wRC+
-    data_batter <- mutate(data_batter, caseC = as.numeric(RBI)+as.numeric(H)+as.numeric(SB)*4) # case C = RBI + SF ,  (안타 + 타점)
+    data_batter <- mutate(data_batter, caseC = (as.numeric(RBI)*1.5+as.numeric(H)+as.numeric(SB)*2)^2) # case C = RBI + F ,  (안타 + 타점)
     data_batter <- mutate(data_batter, caseD = as.numeric(PA)/as.numeric(G)) # case D = 많이 나오는 선수는 잘하는 선수다, 유효타석 / 출장경기수
     }
 
@@ -72,20 +72,20 @@ for (now_year in start_year:end_year) {
     for (i in 1:nrow(data_pitcher)) {
     data_pitcher <- mutate(data_pitcher, caseX = ifelse(100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10)<=0, 0, 2*(100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10)))) # case X = rRA9pf + WHIP
     data_pitcher <- mutate(data_pitcher, caseY = if_else(as.numeric(ERA)>=50,0,-1*as.numeric(ERA))) # case Y = -ERA
-    data_pitcher <- mutate(data_pitcher, caseZ = ifelse(as.numeric(ERA)>=20 | as.numeric(ERA)<=0.5,0,0.12*(as.numeric(G)*2+as.numeric(IP)*1.5-as.numeric(ERA)*10)^2.5)) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
-    }
+    data_pitcher <- mutate(data_pitcher, caseZ = ifelse(as.numeric(ERA)>=20 | as.numeric(ERA)<=0.5 | as.numeric(G)<=3,0,0.12*((as.numeric(HD)+as.numeric(S))*5.2+as.numeric(IP)*1.35-as.numeric(ERA)*10)^2.55)) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
+    } 
 
     #팀별로 가중치값 합산
     team_WAR_batter <- data_batter %>% group_by(Team) %>% summarise(WAR_total_batter = sum(as.numeric(WAR), na.rm=TRUE))
     team_WAR_pitcher <- data_pitcher %>% group_by(Team) %>% summarise(WAR_total_pitcher = sum(as.numeric(WAR), na.rm=TRUE))
     team_WAR <- team_WAR_batter %>% full_join(team_WAR_pitcher, by = "Team") %>% mutate(WAR_total = coalesce(WAR_total_batter, 0) + coalesce(WAR_total_pitcher, 0))
-    team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = 0.2 * sum(caseA, na.rm=TRUE))
+    team_caseA <- data_batter %>% group_by(Team) %>% summarise(caseA_total = 0.00127 * sum(caseA, na.rm=TRUE))
     team_caseB <- data_batter %>% group_by(Team) %>% summarise(caseB_total = sum(caseB, na.rm=TRUE)) #사장
-    team_caseC <- data_batter %>% group_by(Team) %>% summarise(caseC_total = 0.21 * sum(caseC, na.rm=TRUE))
+    team_caseC <- data_batter %>% group_by(Team) %>% summarise(caseC_total = 0.0011 * sum(caseC, na.rm=TRUE))
     team_caseD <- data_batter %>% group_by(Team) %>% summarise(caseD_total = sum(caseD, na.rm=TRUE)) #사장
     team_caseX <- data_pitcher %>% group_by(Team) %>% summarise(caseX_total = 0.28 * sum(caseX, na.rm=TRUE)) #사장
     team_caseY <- data_pitcher %>% group_by(Team) %>% summarise(caseY_total = sum(caseY, na.rm=TRUE)) #사장
-    team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = 0.00063 * sum(caseZ, na.rm=TRUE))
+    team_caseZ <- data_pitcher %>% group_by(Team) %>% summarise(caseZ_total = 0.00095 * sum(caseZ, na.rm=TRUE))
     
     # 필요시 열 생성
     if (!"WAR_total" %in% colnames(data_team_rank)) {
@@ -112,6 +112,15 @@ for (now_year in start_year:end_year) {
     if (!"caseZ_total" %in% colnames(data_team_rank)) {
         data_team_rank$caseZ_total <- NA
     }
+    if (!"caseA_rank" %in% colnames(data_team_rank)) {
+        data_team_rank$caseA_rank <- NA
+    }
+    if (!"caseC_rank" %in% colnames(data_team_rank)) {
+        data_team_rank$caseC_rank <- NA
+    }
+    if (!"caseZ_rank" %in% colnames(data_team_rank)) {
+        data_team_rank$caseZ_rank <- NA
+    }
 
     # data_team_rank 파일에 WAR_total 값을 추가
     for (i in 1:nrow(team_WAR)) {
@@ -127,18 +136,23 @@ for (now_year in start_year:end_year) {
     }
     }
 
-    # data_team_rank 파일에 caseA_total 값을 추가
+    team_caseA <- team_caseA %>% arrange(desc(caseA_total)) %>% mutate(caseA_rank = rank(-caseA_total, ties.method = "min"))
+    team_caseC <- team_caseC %>% arrange(desc(caseC_total)) %>% mutate(caseC_rank = rank(-caseC_total, ties.method = "min"))
+    team_caseZ <- team_caseZ %>% arrange(desc(caseZ_total)) %>% mutate(caseZ_rank = rank(-caseZ_total, ties.method = "min"))
+
     for (i in 1:nrow(team_caseA)) {
     temp_team_name1 <- team_caseA$Team[i]
-    selected_teamrow <- subset(team_caseA, Team==temp_team_name1)
+    selected_teamrow <- subset(team_caseA, Team == temp_team_name1)
     selected_teamcaseA <- selected_teamrow$caseA_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseA_total[j] <- selected_teamcaseA
+    selected_teamcaseA_rank <- selected_teamrow$caseA_rank
+        for (j in 1:nrow(data_team_rank)) {
+            temp_team_name2 <- data_team_rank$Team[j]
+            if (temp_team_name1 == temp_team_name2) {
+                data_team_rank$caseA_total[j] <- selected_teamcaseA
+                data_team_rank$caseA_rank[j] <- selected_teamcaseA_rank
             break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseB_total 값을 추가
@@ -146,27 +160,29 @@ for (now_year in start_year:end_year) {
     temp_team_name1 <- team_caseB$Team[i]
     selected_teamrow <- subset(team_caseB, Team==temp_team_name1)
     selected_teamcaseB <- selected_teamrow$caseB_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseB_total[j] <- selected_teamcaseB
-            break
+        for(j in 1:nrow(data_team_rank)){
+            temp_team_name2 <- data_team_rank$Team[j]
+            if(temp_team_name1 == temp_team_name2){
+                data_team_rank$caseB_total[j] <- selected_teamcaseB
+                break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseC_total 값을 추가
     for (i in 1:nrow(team_caseC)) {
     temp_team_name1 <- team_caseC$Team[i]
-    selected_teamrow <- subset(team_caseC, Team==temp_team_name1)
+    selected_teamrow <- subset(team_caseC, Team == temp_team_name1)
     selected_teamcaseC <- selected_teamrow$caseC_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseC_total[j] <- selected_teamcaseC
+    selected_teamcaseC_rank <- selected_teamrow$caseC_rank 
+        for (j in 1:nrow(data_team_rank)) {
+            temp_team_name2 <- data_team_rank$Team[j]
+            if (temp_team_name1 == temp_team_name2) {
+                data_team_rank$caseC_total[j] <- selected_teamcaseC
+                data_team_rank$caseC_rank[j] <- selected_teamcaseC_rank
             break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseD_total 값을 추가
@@ -174,13 +190,13 @@ for (now_year in start_year:end_year) {
     temp_team_name1 <- team_caseD$Team[i]
     selected_teamrow <- subset(team_caseD, Team==temp_team_name1)
     selected_teamcaseD <- selected_teamrow$caseD_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseD_total[j] <- selected_teamcaseD
-            break
+        for(j in 1:nrow(data_team_rank)){
+            temp_team_name2 <- data_team_rank$Team[j]
+            if(temp_team_name1 == temp_team_name2){
+                data_team_rank$caseD_total[j] <- selected_teamcaseD
+                break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseX_total 값을 추가
@@ -188,13 +204,13 @@ for (now_year in start_year:end_year) {
     temp_team_name1 <- team_caseX$Team[i]
     selected_teamrow <- subset(team_caseX, Team==temp_team_name1)
     selected_teamcaseX <- selected_teamrow$caseX_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseX_total[j] <- selected_teamcaseX
-            break
+        for(j in 1:nrow(data_team_rank)){
+            temp_team_name2 <- data_team_rank$Team[j]
+            if(temp_team_name1 == temp_team_name2){
+                data_team_rank$caseX_total[j] <- selected_teamcaseX
+                break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseY_total 값을 추가
@@ -202,27 +218,29 @@ for (now_year in start_year:end_year) {
     temp_team_name1 <- team_caseY$Team[i]
     selected_teamrow <- subset(team_caseY, Team==temp_team_name1)
     selected_teamcaseY <- selected_teamrow$caseY_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
-            data_team_rank$caseY_total[j] <- selected_teamcaseY
-            break
+        for(j in 1:nrow(data_team_rank)){
+            temp_team_name2 <- data_team_rank$Team[j]
+            if(temp_team_name1 == temp_team_name2){
+                data_team_rank$caseY_total[j] <- selected_teamcaseY
+                break
+            }
         }
-    }
     }
 
     # data_team_rank 파일에 caseZ_total 값을 추가
     for (i in 1:nrow(team_caseZ)) {
     temp_team_name1 <- team_caseZ$Team[i]
-    selected_teamrow <- subset(team_caseZ, Team==temp_team_name1)
+    selected_teamrow <- subset(team_caseZ, Team == temp_team_name1)
     selected_teamcaseZ <- selected_teamrow$caseZ_total
-    for(j in 1:nrow(data_team_rank)){
-        temp_team_name2 <- data_team_rank$Team[j]
-        if(temp_team_name1 == temp_team_name2){
+    selected_teamcaseZ_rank <- selected_teamrow$caseZ_rank
+        for (j in 1:nrow(data_team_rank)) {
+            temp_team_name2 <- data_team_rank$Team[j]
+            if (temp_team_name1 == temp_team_name2) {
             data_team_rank$caseZ_total[j] <- selected_teamcaseZ
+            data_team_rank$caseZ_rank[j] <- selected_teamcaseZ_rank
             break
+            }
         }
-    }
     }
 
     # data_team_rank에 각 가중치의 순위와 실제 순위의 차이값 입력
@@ -240,8 +258,10 @@ for (now_year in start_year:end_year) {
     data_team_rank$CXcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseX_total), ties.method = "min"))
     data_team_rank$CZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseZ_total), ties.method = "min"))
     data_team_rank$XZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseX_total + data_team_rank$caseZ_total), ties.method = "min"))
+    data_team_rank$AZhapdif <- abs(data_team_rank$Rank-rank((data_team_rank$caseA_rank + data_team_rank$caseZ_rank), ties.method = "min"))
+    data_team_rank$CZhapdif <- abs(data_team_rank$Rank-rank((data_team_rank$caseC_rank + data_team_rank$caseZ_rank), ties.method = "min"))
 
-    write_xlsx(data_team_rank, path = paste0("Analyzed/try8/data_", now_year, ".xlsx"))
+    write_xlsx(data_team_rank, path = paste0("Analyzed/final/data_", now_year, ".xlsx"))
 
     rm(file_name_batter)
     rm(file_name_pitcher)
@@ -276,14 +296,14 @@ for (now_year in start_year:end_year) {
 results <- list()
 
 for (now_year in start_year:end_year) {
-    file_path <- paste0("Analyzed/try8/data_", now_year, ".xlsx")
+    file_path <- paste0("Analyzed/final/data_", now_year, ".xlsx")
     data <- read_excel(file_path)
     
     # 동적 저장
     assign(paste0("data_", now_year), data)
     
     # 가중치 합 계산
-    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb","XZcomb")
+    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb","XZcomb","AZhapdif","CZhapdif")
     case_sums <- colSums(data[, selected_columns])
     results[[paste0("data_", now_year, "_sums")]] <- case_sums
 }
