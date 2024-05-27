@@ -70,11 +70,10 @@ for (now_year in start_year:end_year) {
 
     #정해놓은 가중치 생성 _ 투수
     for (i in 1:nrow(data_pitcher)) {
-    data_pitcher <- mutate(data_pitcher, caseX = if_else(as.numeric(WHIP) >= 10 | as.numeric(rRA9pf)>=50, 0, 100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10))) # case X = rRA9pf + WHIP
+    data_pitcher <- mutate(data_pitcher, caseX = ifelse(100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10)<=0, 0, 2*(100-(as.numeric(rRA9pf)*10+as.numeric(WHIP)*10)))) # case X = rRA9pf + WHIP
     data_pitcher <- mutate(data_pitcher, caseY = if_else(as.numeric(ERA)>=50,0,-1*as.numeric(ERA))) # case Y = -ERA
-    data_pitcher <- mutate(data_pitcher, caseZ = ((as.numeric(G)*1.5+as.numeric(IP)*1.5)^2)*2) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
+    data_pitcher <- mutate(data_pitcher, caseZ = ifelse(as.numeric(ERA)>=20,0,0.1*(as.numeric(G)*2+as.numeric(IP)*1.5-as.numeric(ERA)*3)^2.5)) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
     }
-    data_pitcher$caseY = data_pitcher$caseY + 50
 
     #팀별로 가중치값 합산
     team_WAR_batter <- data_batter %>% group_by(Team) %>% summarise(WAR_total_batter = sum(as.numeric(WAR), na.rm=TRUE))
@@ -240,6 +239,7 @@ for (now_year in start_year:end_year) {
     data_team_rank$AZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseA_total + data_team_rank$caseZ_total), ties.method = "min"))
     data_team_rank$CXcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseX_total), ties.method = "min"))
     data_team_rank$CZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseC_total + data_team_rank$caseZ_total), ties.method = "min"))
+    data_team_rank$XZcomb <- abs(data_team_rank$Rank-rank(-(data_team_rank$caseX_total + data_team_rank$caseZ_total), ties.method = "min"))
 
     write_xlsx(data_team_rank, path = paste0("Analyzed/try6/data_", now_year, ".xlsx"))
 
@@ -283,7 +283,7 @@ for (now_year in start_year:end_year) {
     assign(paste0("data_", now_year), data)
     
     # 가중치 합 계산
-    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb")
+    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb","XZcomb")
     case_sums <- colSums(data[, selected_columns])
     results[[paste0("data_", now_year, "_sums")]] <- case_sums
 }
@@ -298,7 +298,7 @@ results_df <- do.call(rbind, lapply(names(results), function(name) {
 results_long <- gather(results_df, key = "Case", value = "Sum", -Year)
 
 # 'AXcomb'와 'AZcomb' 데이터만 필터링
-results_filtered <- results_long %>% filter(Case %in% c("AZcomb", "CZcomb"))
+results_filtered <- results_long %>% filter(Case %in% c("AZcomb","CZcomb"))
 
 # 그래프 그리기
 cases <- unique(results_filtered$Case)
