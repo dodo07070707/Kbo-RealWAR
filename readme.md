@@ -8,6 +8,8 @@
 김민재, 조성민  
 **Used Stack**
 R, Node.js, Excel Web Scrapper  
+**Gita Sahang**
+이거 하려고 R 배움    
 
 # 필요한 라이브러리 불러오기
 ```
@@ -22,7 +24,5 @@ library(ggplot2) # ggplot2 라이브러리 불러오기
 library(tidyr) # tidyr 라이브러리 불러오기 
 library(writexl) # tidyr 라이브러리 불러오기 
 ```
-  
-*이거하려고R배움*
 
 ![Frame 3797](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/98a3a865-674c-485d-a0e1-a1aeb64fc3ba)
