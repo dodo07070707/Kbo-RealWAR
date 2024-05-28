@@ -25,6 +25,11 @@ library(tidyr) # tidyr 라이브러리 불러오기
 library(writexl) # tidyr 라이브러리 불러오기 
 ```
 ![Frame 3797](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/98a3a865-674c-485d-a0e1-a1aeb64fc3ba)  
+# 타자 재정립 WAR 순위 (model A, accuracy 85.5%)
+![Untitled](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/f6c63efb-5db3-4cb7-b8f7-da3b2236f05f)  
+# 투수 재정립 WAR 순위  
+![Untitled1](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/c249c7b3-6d04-4684-83d3-6425b1ca82c5)  
+# 년도별 실제 순위와 재정립 WAR 기반 팀 순위의 차
 ![Untitled](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/d8ddb069-5796-44fc-9870-c2586465669d)  
+# 2024.05.28 기준 2024년 KBO리그 기대순위
 ![KakaoTalk_20240528_122603083](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/2b338055-ec3c-43a9-b779-56a6d87b8898)  
-**2024.5.28기준 기대순위**
