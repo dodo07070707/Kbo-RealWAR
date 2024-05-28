@@ -8,8 +8,11 @@
 김민재, 조성민  
 **Used Stack**
 R, Node.js, Excel Web Scrapper  
-**Gita Sahang**
+**Model Accuracy**
+85.5% (Model A) / 84.5% (Model B)  
+**Etc**
 이거 하려고 R 배움    
+
 
 # 필요한 라이브러리 불러오기
 ```
