@@ -24,5 +24,7 @@ library(ggplot2) # ggplot2 라이브러리 불러오기
 library(tidyr) # tidyr 라이브러리 불러오기 
 library(writexl) # tidyr 라이브러리 불러오기 
 ```
-
-![Frame 3797](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/98a3a865-674c-485d-a0e1-a1aeb64fc3ba)
+![Frame 3797](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/98a3a865-674c-485d-a0e1-a1aeb64fc3ba)  
+![Untitled](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/d8ddb069-5796-44fc-9870-c2586465669d)  
+![KakaoTalk_20240528_122603083](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/2b338055-ec3c-43a9-b779-56a6d87b8898)  
+**2024.5.28기준 기대순위**
