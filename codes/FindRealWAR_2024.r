@@ -7,12 +7,17 @@ library(writexl)
 # 반복할 연도 범위 설정
 start_year <- 2024
 end_year <- 2024
+
+#마지막 분석 날짜
+month <- 7
+day <- 18
+
 for (now_year in start_year:end_year) {
 
     # 파일 이름 생성
-    file_name_batter <- paste0("Kbo_Stats/batter/batter_", now_year, ".xlsx")
-    file_name_pitcher <- paste0("Kbo_Stats/pitcher/pitcher_", now_year, ".xlsx")
-    file_name_team_info <- "Kbo_Stats/TeamInfo.xlsx"
+    file_name_batter <- paste0("Kbo_Stats/batter/batter_", now_year,"_",month,"_",day,".xlsx")
+    file_name_pitcher <- paste0("Kbo_Stats/pitcher/pitcher_", now_year,"_",month,"_",day,".xlsx")
+    file_name_team_info <- "Kbo_Stats/TeamInfo_2024.xlsx"
     file_name_team_rank <- paste0("Kbo_Stats/Team/Team_", now_year, ".xlsx")
     
     # 파일 경로 생성
@@ -26,6 +31,7 @@ for (now_year in start_year:end_year) {
     data_pitcher <- read_excel(file_path_pitcher)
     data_team_info <- read_excel(file_name_team_info)
     data_team_rank <- read_excel(file_name_team_rank)
+
     
     #결측치 제거
     data_batter <- data_batter %>% filter(Rank != "Rank")
@@ -60,6 +66,7 @@ for (now_year in start_year:end_year) {
     team_info <- selected_rows$Team
     data_pitcher$Team <- team_info
 
+
     #정해놓은 가중치 생성 _ 타자
     for (i in 1:nrow(data_batter)) {
     data_batter <- mutate(data_batter, caseA = (as.numeric(TB)+as.numeric(SB)-as.numeric(CS)+as.numeric(BB)+as.numeric(HP)+as.numeric(IB)-as.numeric(GDP))^2) #case A = 한베이스당 한 가중치
@@ -74,7 +81,7 @@ for (now_year in start_year:end_year) {
     data_pitcher <- mutate(data_pitcher, caseY = if_else(as.numeric(ERA)>=50,0,-1*as.numeric(ERA))) # case Y = -ERA
     data_pitcher <- mutate(data_pitcher, caseZ = ifelse(as.numeric(ERA)>=20 | as.numeric(ERA)<=0.5 | as.numeric(G)<=3,0,0.12*((as.numeric(HD)+as.numeric(S))*5.2+as.numeric(IP)*1.35-as.numeric(ERA)*10)^2.55)) # case Z = 많이 나오는 선수는 잘하는 선수다, 소화이닝 + 경기수
     } 
-
+    
     #팀별로 가중치값 합산
     team_WAR_batter <- data_batter %>% group_by(Team) %>% summarise(WAR_total_batter = sum(as.numeric(WAR), na.rm=TRUE))
     team_WAR_pitcher <- data_pitcher %>% group_by(Team) %>% summarise(WAR_total_pitcher = sum(as.numeric(WAR), na.rm=TRUE))
@@ -263,7 +270,7 @@ for (now_year in start_year:end_year) {
     data_team_rank$AZhapdif <- abs(data_team_rank$Rank-rank((data_team_rank$caseA_rank + data_team_rank$caseZ_rank), ties.method = "min"))
     data_team_rank$CZhapdif <- abs(data_team_rank$Rank-rank((data_team_rank$caseC_rank + data_team_rank$caseZ_rank), ties.method = "min"))
 
-    write_xlsx(data_team_rank, path = paste0("Analyzed/final/data_", now_year, ".xlsx"))
+    write_xlsx(data_team_rank, path = paste0("Analyzed/final/data_", now_year,"_",month,"_",day,".xlsx"))
 
     rm(file_name_batter)
     rm(file_name_pitcher)
@@ -290,44 +297,7 @@ for (now_year in start_year:end_year) {
     rm(team_caseY)
     rm(team_caseZ)
     
-    print(paste("Year : ",now_year," file created, completed"))
+    print(paste("Year : ",now_year,"_",month,"_",day,"file created, completed"))
 
 }
 
-
-results <- list()
-
-for (now_year in start_year:end_year) {
-    file_path <- paste0("Analyzed/final/data_", now_year, ".xlsx")
-    data <- read_excel(file_path)
-    
-    # 동적 저장
-    assign(paste0("data_", now_year), data)
-    
-    # 가중치 합 계산
-    selected_columns <- c("ACXZcomb", "AXcomb", "AZcomb", "CXcomb", "CZcomb","XZcomb","AZhapdif","CZhapdif")
-    case_sums <- colSums(data[, selected_columns])
-    results[[paste0("data_", now_year, "_sums")]] <- case_sums
-}
-
-# 결과 데이터 프레임 통합
-results_df <- do.call(rbind, lapply(names(results), function(name) {
-    year <- as.numeric(sub("data_(\\d+)_sums", "\\1", name))
-    data.frame(Year = year, t(results[[name]]))
-}))
-
-# 데이터 프레임을 long format으로 변환
-results_long <- gather(results_df, key = "Case", value = "Sum", -Year)
-
-# 'AXcomb'와 'AZcomb' 데이터만 필터링
-results_filtered <- results_long %>% filter(Case %in% c("AZcomb","CZcomb"))
-
-# 그래프 그리기
-cases <- unique(results_filtered$Case)
-colors <- rainbow(length(cases))
-plot(results_filtered$Year, results_filtered$Sum, type = "n", xlab = "Year", ylab = "Sum of weight Differences", main = "Comparison trends for AZcomb and CZcomb")
-for (i in seq_along(cases)) {
-    case_data <- subset(results_filtered, Case == cases[i])
-    lines(case_data$Year, case_data$Sum, type = "b", col = colors[i], pch = 19, lwd = 2)
-}
-legend("topleft", legend = cases, col = colors, pch = 19, lwd = 2)
