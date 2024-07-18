@@ -37,3 +37,6 @@ library(writexl) # tidyr 라이브러리 불러오기
 ![Untitled](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/d8ddb069-5796-44fc-9870-c2586465669d)  
 # 2024.05.28 기준 2024년 KBO리그 기대순위
 ![KakaoTalk_20240528_122603083](https://github.com/dodo07070707/Kbo-RealWAR/assets/98579912/2b338055-ec3c-43a9-b779-56a6d87b8898)  
+# 2024.07.18 기준 2024년 KBO리그 기대순위
+![KakaoTalk_20240718_105116327](https://github.com/user-attachments/assets/eef8a5a4-fa3d-4f67-93d3-49231ec2541a)
+
