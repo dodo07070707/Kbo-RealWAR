@@ -1,7 +1,7 @@
 {
   "name": "kimdo",
   "version": "1.0.0",
-  "description": "",
+  "description": "**Subject**\r 최근 20년 KBO 통계를 분석해 팀 승률과 가장 밀접히 연관되는 승리기여도(WAR) 재정립  \r **Developer**\r 김도윤  \r **Special Thanks**\r 김민재, 조성민  \r **Used Stack**\r R, Node.js, Excel Web Scrapper  \r **Model Accuracy**\r 85.5% (Model A) / 84.5% (Model B)  \r **Etc**\r 이거 하려고 R 배움",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -10,7 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.8",
+    "axios": "^1.7.2",
     "excel": "^1.0.1",
     "exceljs": "^4.4.0"
   }
